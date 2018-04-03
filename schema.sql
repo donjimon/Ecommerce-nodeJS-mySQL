@@ -12,7 +12,7 @@ CREATE TABLE guitars (
 );
 CREATE TABLE guitar_category (
   id INT NOT NULL AUTO_INCREMENT,
-  catergory VARCHAR(100) NULL,
+  category VARCHAR(100) NULL,
   inventory INT(10) NULL default 0, 
   PRIMARY KEY (id)
 );

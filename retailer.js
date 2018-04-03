@@ -153,42 +153,57 @@ function addItems(){
         message:"what is the list price?"
     }
     ]).then(function(answer){
+        var newItem;
+        firstUpdate().then(() => {
+            connection.query("SELECT id, category FROM guitar_category",function(err,res){
+                if(err) throw err;
+                res.forEach(function(element){
+                    if (element.category === answer.priceTier){
+                        connection.query("UPDATE guitar_category SET inventory = inventory + 1 WHERE id=" + element.id);
+                        connection.query("UPDATE guitars SET ? WHERE ?",[{category: element.id}, {id: newItem}]);
+                        console.log(newItem);
+                    }
+                });
+            });
+        });
         function updateGuitars(brandId){
             connection.query ("INSERT INTO guitars SET ?", 
                                 {
                                     item_name: answer.name, 
                                     brand: brandId,
-                                    category: tierId,
-                                    net_price: netPrice,
-                                    list_price: listPrice
-                                });                         
-        }; 
-        connection.query("SELECT id, category FROM guitar_category",function(err,res){
-            if(err) throw err;
-            res.forEach(function(element){
-                if (element.category === answer.priceTier){
-                    connection.query("UPDATE guitar_category SET inventory = inventory + 1 WHERE id=" + element.id);
-                }
+                                    net_price: answer.netPrice,
+                                    list_price: answer.listPrice
+                                },
+                function(err,res){
+                    if (err) throw error;
+                    newItem = res.insertId;
+                    console.log(newItem);
+                });                         
+        };  
+        
+        async function firstUpdate() {
+            connection.query("SELECT id, brand_name FROM brands",function(err,res){
+                var counter = res.length;
+                var match = false;
+                res.forEach(function(element){
+                    if (element.brand_name === answer.brand){
+                        connection.query("UPDATE brands SET inventory = inventory + 1 WHERE id=" + element.id);
+                        updateGuitars(element.id);
+                        match = true;
+                        console.log("update existing one");
+                        } 
+                    else {counter--;};
+                    if (counter === 0 && match === false){
+                        connection.query("INSERT INTO brands SET ?",{brand_name: answer.brand, inventory: 1},function(err,res){
+                            if(err) throw err;
+                            updateGuitars(res.insertId);  
+                            console.log("update new one");                  
+                        })
+                    }
+                });
             });
-        });
-        connection.query("SELECT id, brand_name FROM brands",function(err,res){
-            var counter = res.length;
-            var match = false;
-            res.forEach(function(element){
-                if (element.brand_name === answer.brand){
-                    connection.query("UPDATE brands SET inventory = inventory + 1 WHERE id=" + element.id);
-                    updateGuitars(element.id);
-                    match = true;
-                    console.log("yeah");
-                    } else {counter--;};
-                if (counter === 1 && match === false){
-                    connection.query("INSERT INTO brands SET ?",{brand_name: answer.brand, inventory: 1},function(err,res){
-                        if(err) throw err;
-                        updateGuitars(res.insertId);
-                    })
-                }
-            });
-        });
+        };
+         
     })
 };
 
